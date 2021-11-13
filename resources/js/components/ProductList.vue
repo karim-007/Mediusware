@@ -3,11 +3,11 @@
         <form action="javascript:void(0)" method="get" class="card-header">
             <div class="form-row justify-content-between">
                 <div class="col-md-2">
-                    <input type="text" name="title" placeholder="Product Title" class="form-control">
+                    <input type="text" v-model="name" name="title" placeholder="Product Title" class="form-control">
                 </div>
                 <div class="col-md-2">
-                    <b-dropdown id="dropdown-1" variant="light"  text="Variant" class="m-md-2">
-                        <b-dropdown-item>First Action</b-dropdown-item>
+                    <b-dropdown id="dropdown-1" v-model="variant" variant="light"  text="Variant" class="m-md-2">
+                        <b-dropdown-item value="null">Select One</b-dropdown-item>
                         <b-dropdown-item>Second Action</b-dropdown-item>
                         <b-dropdown-item>Third Action</b-dropdown-item>
                         <b-dropdown-divider>ddd</b-dropdown-divider>
@@ -21,12 +21,12 @@
                         <div class="input-group-prepend">
                             <span class="input-group-text">Price Range</span>
                         </div>
-                        <input type="text" name="price_from" aria-label="First name" placeholder="From" class="form-control">
-                        <input type="text" name="price_to" aria-label="Last name" placeholder="To" class="form-control">
+                        <input type="text" v-model.number="p_from" name="price_from" aria-label="First name" placeholder="From" class="form-control">
+                        <input type="text" v-model.number="p_to" name="price_to" aria-label="Last name" placeholder="To" class="form-control">
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <input type="date" name="date" placeholder="Date" class="form-control">
+                    <input type="date" v-model="f_date" name="date" placeholder="Date" class="form-control">
                 </div>
                 <div class="col-md-1">
                     <button type="submit" class="btn btn-primary float-right"><i class="fa fa-search"></i></button>
@@ -37,7 +37,7 @@
         <!-- table -->
         <vue-good-table
             :columns="columns"
-            :rows="products"
+            :rows="filter_products"
             :search-options="{
         enabled: true,
         externalQuery: searchTerm }"
@@ -155,7 +155,12 @@ export default {
         return {
             moment,
             products:[],
+            filter_products:[],
             name: '',
+            variant:null,
+            p_from:null,
+            p_to:null,
+            f_date:null,
             pageLength: 10,
             dir: false,
             model_mode:'add',
@@ -199,7 +204,56 @@ export default {
             }).catch(()=>{
                 this.products=[];
             });
-        }
+        },
+        filterProduct(){
+          this.filter_products=this.products;
+            if (this.name !== ''){
+                this.filter_products = this.products.filter(item=> {
+                    return item.title.toLowerCase().indexOf(this.name.toLowerCase()) > -1
+                });
+            }
+            if (this.f_date !== null){
+                this.filter_products = this.filter_products.filter(item=> {
+                    if(moment(item.created_at).format('YMMDD') === moment(this.f_date).format('YMMDD')){
+                        return item;
+                    }
+                });
+            }
+            if (this.p_from !== null){
+                this.filter_products = this.filter_products.map(item=> {
+                    let min = Math.min(...item.product_variant_prices.map(d=>d.price));
+                    let max = Math.max(...item.product_variant_prices.map(d=>d.price));
+                    if (max>=this.p_from || min<=this.p_from) return item;
+                }).filter(Boolean);
+            }
+            if (this.p_to !== null){
+                this.filter_products = this.filter_products.map(item=> {
+                    //let min = Math.min(...item.product_variant_prices.map(d=>d.price));
+                    let max = Math.max(...item.product_variant_prices.map(d=>d.price));
+                    if (max <= this.p_from) return item;
+                }).filter(Boolean);
+            }
+        },
+    },
+    watch:{
+        products(){
+            this.filterProduct();
+        },
+        name(){
+            this.filterProduct();
+        },
+        variant(){
+            this.filterProduct();
+        },
+        p_from(){
+            this.filterProduct();
+        },
+        p_to(){
+            this.filterProduct();
+        },
+        f_date(){
+            this.filterProduct();
+        },
     }
 }
 </script>
