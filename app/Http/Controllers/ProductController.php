@@ -20,6 +20,24 @@ class ProductController extends Controller
         return view('products.index');
     }
 
+    /*
+     * method for get all product list
+     * */
+    public function productList()
+    {
+        $products = Product::with([
+            'productImages',
+            'productVariantPrices'=>function($q){
+                $q->with([
+                    'productVariantOne'=>function($q){$q->select('id','variant');},
+                    'productVariantTwo'=>function($q){$q->select('id','variant');},
+                    'productVariantThree'=>function($q){$q->select('id','variant');},
+                ])->get();
+            }
+        ])->get();
+        return response()->json($products,200);
+    }
+
     /**
      * Show the form for creating a new resource.
      *
