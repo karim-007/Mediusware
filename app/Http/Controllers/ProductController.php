@@ -7,6 +7,7 @@ use App\Models\ProductVariant;
 use App\Models\ProductVariantPrice;
 use App\Models\Variant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
 {
@@ -57,7 +58,47 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-
+        Validator::make($request->all(),[
+            'title'=>'required|string',
+            'sku'=>'required|string',
+            'description'=>'required',
+            'product_variant'=>'required',
+            'product_variant_prices'=>'required',
+        ])->validate();
+        $product = Product::create($request->only(['title','sku','description']));
+        if (isset($product->id)) {
+            $ids=[];
+            foreach ($request->product_variant as $key=>$vv){
+                $itms = collect($vv['tags'])->map(function ($item) use ($product, $vv) {
+                    $its=['variant'=>$item,'variant_id'=>$vv['option'],'product_id'=>$product->id];
+                    return $its;
+                });
+                $product->variants()->attach($itms);
+                $idd=ProductVariant::where(['product_id'=>$product->id,'variant_id'=>$vv['option']])->pluck('id')->toArray();
+                $ids[]=$idd;
+            }
+            if (count($ids)>0) {
+                $matrix = collect($ids[0]);
+                if(count($ids)>2) $matrix = $matrix->crossJoin($ids[1], $ids[2]);
+                else if(count($ids)>1) $matrix = $matrix->crossJoin($ids[1]);
+                $itms=[];
+                foreach ($request->product_variant_prices as $key=>$vv){
+                    $itms[] =[
+                        'price'=>$vv['price'],
+                        'stock'=>$vv['stock'],
+                        'product_id'=>$product->id,
+                        'product_variant_one'=>$matrix[$key][0]??null,
+                        'product_variant_two'=>$matrix[$key][1]??null,
+                        'product_variant_three'=>$matrix[$key][2]??null,
+                        'created_at'=>now(),
+                        'updated_at'=>now(),
+                    ];
+                }
+                ProductVariantPrice::insert($itms);
+            }
+            return  response()->json(['status'=>'success','message'=>'Successfully stored'],200);
+        }
+        return  response()->json(['status'=>'error','message'=>'Invalid request'],404);
     }
 
 

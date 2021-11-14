@@ -17,7 +17,7 @@ class Product extends Model
 
     public function variants()
     {
-        return $this->belongsToMany(Variant::class)->withTimestamps();
+        return $this->belongsToMany(Variant::class,'product_variants')->withPivot('variant')->withTimestamps();
     }
 
     public function productVariant()
