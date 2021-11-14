@@ -21,6 +21,7 @@ window.Vue = require('vue');
 
 Vue.component('create-product', require('./components/CreateProduct.vue').default);
 Vue.component('product-list', require('./components/ProductList.vue').default);
+Vue.component('update-product', require('./components/UpdateProduct.vue').default);
 
 /**
  * Next, we will create a fresh Vue application instance and attach it to

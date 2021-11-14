@@ -80,7 +80,7 @@
 <!--                      <b-button variant="danger">
                       </b-button>-->
                         <div class="btn-group btn-group-sm">
-                            <a href="route('product.edit', 1)" class="btn btn-success">Edit</a>
+                            <a :href="`/product/${props.row.id}/edit`" class="btn btn-success">Edit</a>
                         </div>
                     </template>
                 </span>
